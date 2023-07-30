@@ -15,19 +15,22 @@ struct ContentView: View {
     var body: some View {
         NavigationView{
             List{
-                ForEach(expenses.items) { item in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(item.name)
-                                .font(.headline)
-                            Text(item.type)
+                Section(header:Text("Personal")){
+                    ForEach(expenses.items) { item in
+                        if item.type == "Personal"{
+                            ExpenseRowView(item: item)
                         }
-
-                        Spacer()
-                        Text(item.amount, format: .currency(code: "USD"))
                     }
+                    .onDelete(perform: removeItems)
                 }
-                .onDelete(perform: removeItems)
+                Section(header:Text("Business")){
+                    ForEach(expenses.items) { item in
+                        if item.type == "Business"{
+                            ExpenseRowView(item: item)
+                        }
+                    }
+                    .onDelete(perform: removeItems)
+                }
             }
             .navigationTitle("iExpense")
             .toolbar{
@@ -46,7 +49,29 @@ struct ContentView: View {
         expenses.items.remove(atOffsets: offsets)
     }
 }
-
+struct ExpenseRowView: View{
+    var item: ExpenseItem
+    var body: some View{
+        HStack {
+            VStack(alignment: .leading) {
+                Text(item.name)
+                    .font(.headline)
+                Text(item.type)
+            }
+            
+            Spacer()
+            if item.amount < 100{
+                Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                    .font(item.amount > 10 ? .title: .body)
+            }
+            else{
+                Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                    .font(.largeTitle)
+            }
+            
+        }
+    }
+}
 struct ExpenseItem: Identifiable, Codable{
     let name:String
     let type:String
@@ -61,6 +86,7 @@ class Expenses: ObservableObject{
             }
         }
     }
+    
     
     init(){
         if let savedItems = UserDefaults.standard.data(forKey: "Items"){
